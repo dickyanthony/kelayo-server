@@ -16,6 +16,7 @@ db.connect((err) => {
   if (err) {
     throw err;
   }
+
   console.log('MySQL connected...');
 });
 
@@ -28,7 +29,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
-  console.log('tes');
   res.render('index', { text: 'testing' });
 });
 

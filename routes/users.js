@@ -1,8 +1,9 @@
 import e from 'express';
+import bcrypt from 'bcryptjs';
 const router = e.Router();
+const saltRounds = 10;
 
 router.get('/', (req, res) => {
-  console.log('tes');
   res.render('index', { text: 'testing' });
 });
 
@@ -10,32 +11,51 @@ router.get('/new', (req, res) => {
   res.send('User New Form');
 });
 
-//REGISTER
+// REGISTER
 router.post('/register', (req, res) => {
-  const { name, username, email, password, gender } = req.body;
+  const { nama, username, email, password, gender, role } = req.body;
   const db = req.db;
 
-  if (!name || !username || !email || !password || !gender) {
+  if (!nama || !username || !email || !password || !gender || !role) {
     return res.status(400).send('Isi Semua Bidang!');
   }
 
-  bcrypt.hash(password, saltRounds, (err, hash) => {
+  const emailCheckSql = 'SELECT email FROM account WHERE email = ?';
+  db.query(emailCheckSql, [email], (err, results) => {
     if (err) {
       return res.status(500).send('Oops, Terjadi permasalahan!');
     }
+    if (results.length > 0) {
+      return res.status(409).send('Email sudah digunakan, silakan coba yang lain.');
+    }
 
-    const sql =
-      'INSERT INTO account (name, username, email, password, gender) VALUES (?, ?, ?, ?, ?)';
-    db.query(sql, [name, username, email, hash, gender], (err, result) => {
+    bcrypt.hash(password, saltRounds, (err, hash) => {
       if (err) {
         return res.status(500).send('Oops, Terjadi permasalahan!');
       }
-      res.status(201).send('Daftar Berhasil');
+
+      const sql =
+        'INSERT INTO account (name, username, email, password, gender, role) VALUES (?, ?, ?, ?, ?, ?)';
+      db.query(sql, [nama, username, email, hash, gender, role], (err, result) => {
+        if (err) {
+          return res.status(500).send('Oops, Terjadi permasalahan!');
+        }
+        const userId = result.insertId;
+
+        res.status(201).json({
+          id: userId,
+          name: nama,
+          username: username,
+          email: email,
+          gender: gender,
+          role: role,
+        });
+      });
     });
   });
 });
 
-//LOGIN
+// LOGIN
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
   const db = req.db;
@@ -44,22 +64,33 @@ router.post('/login', (req, res) => {
     return res.status(400).send('Isi Semua Bidang!');
   }
 
-  const sql = 'SELECT id, email, name, gender FROM account WHERE email = ? AND password = ?';
-  db.query(sql, [email, password], (err, results) => {
+  const sql =
+    'SELECT id, username, email, password, name, gender,role FROM account WHERE email = ?';
+  db.query(sql, [email], (err, results) => {
     if (err) {
       return res.status(500).send('Oops, Terjadi permasalahan!');
     }
-
     if (results.length === 0) {
       return res.status(401).send('Email atau password tidak sesuai');
     }
 
     const user = results[0];
-    res.status(200).json({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      gender: user.gender,
+    bcrypt.compare(password, user.password, (err, isMatch) => {
+      if (err) {
+        return res.status(500).send('Terjadi kesalahan saat memeriksa kata sandi.');
+      }
+      if (!isMatch) {
+        return res.status(401).send('Email atau password tidak sesuai');
+      }
+
+      res.status(200).json({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        username: user.username,
+        gender: user.gender,
+        role: user.role,
+      });
     });
   });
 });
