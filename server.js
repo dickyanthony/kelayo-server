@@ -1,9 +1,10 @@
 import e from 'express';
 import bodyParser from 'body-parser';
 import mysql from 'mysql';
-import bcrypt from 'bcryptjs';
 import cors from 'cors';
+
 import userRouter from './routes/users.js';
+import lodgingReservationRouter from './routes/lodgingReservation.js';
 
 const db = mysql.createConnection({
   host: 'localhost',
@@ -41,6 +42,15 @@ app.use(
     next();
   },
   userRouter
+);
+
+app.use(
+  '/lodging-reservation',
+  (req, res, next) => {
+    req.db = db;
+    next();
+  },
+  lodgingReservationRouter
 );
 
 function logger(req, res, next) {
