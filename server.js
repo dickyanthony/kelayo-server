@@ -4,6 +4,7 @@ import mysql from 'mysql';
 import cors from 'cors';
 
 import userRouter from './routes/users.js';
+import touristDestinationRouter from './routes/touristDestination.js';
 import lodgingReservationRouter from './routes/lodgingReservation.js';
 
 const db = mysql.createConnection({
@@ -51,6 +52,15 @@ app.use(
     next();
   },
   lodgingReservationRouter
+);
+
+app.use(
+  '/tourist-destination',
+  (req, res, next) => {
+    req.db = db;
+    next();
+  },
+  touristDestinationRouter
 );
 
 function logger(req, res, next) {

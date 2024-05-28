@@ -1,90 +1,61 @@
-// import e from 'express';
-// import bcrypt from 'bcryptjs';
-// const router = e.Router();
-// const saltRounds = 10;
+import e from 'express';
+const router = e.Router();
 
-// // REGISTER
-// router.post('/register', (req, res) => {
-//   const { nama, username, email, password, gender, role } = req.body;
-//   const db = req.db;
+router.post('/get', (req, res) => {
+  const db = req.db;
+  const { type, page = 1, limit = 9 } = req.body;
+  const offset = (page - 1) * limit;
 
-//   if (!nama || !username || !email || !password || !gender || !role) {
-//     return res.status(400).send('Isi Semua Bidang!');
-//   }
+  let query = 'SELECT id, title, location, description, price, image1 FROM touristDestination';
+  let countQuery = 'SELECT COUNT(*) AS totalData FROM touristDestination';
+  const params = [];
+  const countParams = [];
 
-//   const emailCheckSql = 'SELECT email FROM account WHERE email = ?';
-//   db.query(emailCheckSql, [email], (err, results) => {
-//     if (err) {
-//       return res.status(500).send('Oops, Terjadi permasalahan!');
-//     }
-//     if (results.length > 0) {
-//       return res.status(409).send('Email sudah digunakan, silakan coba yang lain.');
-//     }
+  if (type) {
+    query += ' WHERE type = ?';
+    countQuery += ' WHERE type = ?';
+    params.push(type);
+    countParams.push(type);
+  }
 
-//     bcrypt.hash(password, saltRounds, (err, hash) => {
-//       if (err) {
-//         return res.status(500).send('Oops, Terjadi permasalahan!');
-//       }
+  query += ' LIMIT ? OFFSET ?';
+  params.push(parseInt(limit), parseInt(offset));
 
-//       const sql =
-//         'INSERT INTO account (name, username, email, password, gender, role) VALUES (?, ?, ?, ?, ?, ?)';
-//       db.query(sql, [nama, username, email, hash, gender, role], (err, result) => {
-//         if (err) {
-//           return res.status(500).send('Oops, Terjadi permasalahan!');
-//         }
-//         const userId = result.insertId;
+  db.query(countQuery, countParams, (err, countResults) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
 
-//         res.status(201).json({
-//           id: userId,
-//           name: nama,
-//           username: username,
-//           email: email,
-//           gender: gender,
-//           role: role,
-//         });
-//       });
-//     });
-//   });
-// });
+    const totalData = countResults[0].totalData;
+    const totalPage = Math.ceil(totalData / limit);
 
-// // LOGIN
-// router.post('/login', (req, res) => {
-//   const { email, password } = req.body;
-//   const db = req.db;
+    db.query(query, params, (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
 
-//   if (!email || !password) {
-//     return res.status(400).send('Isi Semua Bidang!');
-//   }
+      res.json({
+        listData: results,
+        totalData,
+        totalPage,
+      });
+    });
+  });
+});
 
-//   const sql =
-//     'SELECT id, username, email, password, name, gender,role FROM account WHERE email = ?';
-//   db.query(sql, [email], (err, results) => {
-//     if (err) {
-//       return res.status(500).send('Oops, Terjadi permasalahan!');
-//     }
-//     if (results.length === 0) {
-//       return res.status(401).send('Email atau password tidak sesuai');
-//     }
+router.get('/get/:id', (req, res) => {
+  const db = req.db;
+  const { id } = req.params;
 
-//     const user = results[0];
-//     bcrypt.compare(password, user.password, (err, isMatch) => {
-//       if (err) {
-//         return res.status(500).send('Terjadi kesalahan saat memeriksa kata sandi.');
-//       }
-//       if (!isMatch) {
-//         return res.status(401).send('Email atau password tidak sesuai');
-//       }
+  const query = 'SELECT * FROM touristDestination WHERE id = ?';
 
-//       res.status(200).json({
-//         id: user.id,
-//         email: user.email,
-//         name: user.name,
-//         username: user.username,
-//         gender: user.gender,
-//         role: user.role,
-//       });
-//     });
-//   });
-// });
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
 
-// export default router;
+    res.json(results[0]);
+  });
+});
+
+export default router;
