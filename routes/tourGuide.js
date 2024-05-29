@@ -24,7 +24,7 @@ router.post('/get', (req, res) => {
 
     db.query(query, params, (err, results) => {
       if (err) {
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json('Oops, Terjadi permasalahan!');
       }
 
       res.json({

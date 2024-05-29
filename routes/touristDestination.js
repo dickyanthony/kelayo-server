@@ -23,7 +23,7 @@ router.post('/get', (req, res) => {
 
   db.query(countQuery, countParams, (err, countResults) => {
     if (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json('Oops, Terjadi permasalahan!');
     }
 
     const totalData = countResults[0].totalData;
@@ -31,7 +31,7 @@ router.post('/get', (req, res) => {
 
     db.query(query, params, (err, results) => {
       if (err) {
-        return res.status(500).json({ error: err.message });
+        return res.status(500).json('Oops, Terjadi permasalahan!');
       }
 
       res.json({

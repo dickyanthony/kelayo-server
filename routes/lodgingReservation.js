@@ -3,13 +3,50 @@ const router = e.Router();
 
 router.get('/get', (req, res) => {
   const db = req.db;
-  const sql = 'SELECT * FROM lodgingReservation';
-  db.query(sql, (err, results) => {
+  const { page = 1, limit = 9 } = req.body;
+  const offset = (page - 1) * limit;
+
+  let query = 'SELECT * FROM lodgingReservation';
+  let countQuery = 'SELECT COUNT(*) AS totalData FROM lodgingReservation';
+  const params = [];
+  const countParams = [];
+
+  query += ' LIMIT ? OFFSET ?';
+  params.push(parseInt(limit), parseInt(offset));
+  db.query(countQuery, countParams, (err, countResults) => {
     if (err) {
-      res.status(500).send('Oops, Terjadi permasalahan!');
-      return;
+      return res.status(500).json({ error: err.message });
     }
-    res.json(results);
+
+    const totalData = countResults[0].totalData;
+    const totalPage = Math.ceil(totalData / limit);
+
+    db.query(query, params, (err, results) => {
+      if (err) {
+        return res.status(500).json('Oops, Terjadi permasalahan!');
+      }
+
+      res.json({
+        listData: results,
+        totalData,
+        totalPage,
+      });
+    });
+  });
+});
+
+router.get('/get/:id', (req, res) => {
+  const db = req.db;
+  const { id } = req.params;
+
+  const query = 'SELECT * FROM lodgingReservation WHERE id = ?';
+
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+
+    res.json(results[0]);
   });
 });
 
