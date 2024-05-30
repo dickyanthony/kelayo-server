@@ -14,36 +14,47 @@ router.post('/register', (req, res) => {
   }
 
   const emailCheckSql = 'SELECT email FROM account WHERE email = ?';
-  db.query(emailCheckSql, [email], (err, results) => {
+  const usernameCheckSql = 'SELECT username FROM account WHERE username = ?';
+
+  db.query(emailCheckSql, [email], (err, emailResults) => {
     if (err) {
       return res.status(500).send('Oops, Terjadi permasalahan!');
     }
-    if (results.length > 0) {
+    if (emailResults.length > 0) {
       return res.status(409).send('Email sudah digunakan, silakan coba yang lain.');
     }
 
-    bcrypt.hash(password, saltRounds, (err, hash) => {
+    db.query(usernameCheckSql, [username], (err, usernameResults) => {
       if (err) {
         return res.status(500).send('Oops, Terjadi permasalahan!');
       }
+      if (usernameResults.length > 0) {
+        return res.status(409).send('Username sudah digunakan, silakan coba yang lain.');
+      }
 
-      const sql =
-        'INSERT INTO account (name, username, email, password, gender, role) VALUES (?, ?, ?, ?, ?, ?)';
-      db.query(sql, [nama, username, email, hash, gender, role], (err, result) => {
+      bcrypt.hash(password, saltRounds, (err, hash) => {
         if (err) {
           return res.status(500).send('Oops, Terjadi permasalahan!');
         }
-        const userId = result.insertId;
-        const token = generateAccessToken({ username: username });
 
-        res.status(201).json({
-          token: token,
-          id: userId,
-          name: nama,
-          username: username,
-          email: email,
-          gender: gender,
-          role: role,
+        const sql =
+          'INSERT INTO account (name, username, email, password, gender, role) VALUES (?, ?, ?, ?, ?, ?)';
+        db.query(sql, [nama, username, email, hash, gender, role], (err, result) => {
+          if (err) {
+            return res.status(500).send('Oops, Terjadi permasalahan!');
+          }
+          const userId = result.insertId;
+          const token = generateAccessToken({ username: username });
+
+          res.status(201).json({
+            token: token,
+            id: userId,
+            name: nama,
+            username: username,
+            email: email,
+            gender: gender,
+            role: role,
+          });
         });
       });
     });
