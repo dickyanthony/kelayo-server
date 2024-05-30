@@ -5,10 +5,12 @@ import mysql from 'mysql';
 import cors from 'cors';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import userRouter from './routes/auth.js';
+import authRouter from './routes/auth.js';
+import userRouter from './routes/user.js';
 import touristDestinationRouter from './routes/touristDestination.js';
 import lodgingReservationRouter from './routes/lodgingReservation.js';
 import tourGuideRouter from './routes/tourGuide.js';
+import rentTransportationRouter from './routes/rentTransportation.js';
 
 // GENERATE RANDOM VALUE
 // const random64 = crypto.randomBytes(64).toString('hex');
@@ -31,7 +33,7 @@ db.connect((err) => {
 
 const app = e();
 
-app.use(logger);
+// app.use(logger);
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -41,10 +43,21 @@ app.get('/', (req, res) => {
   res.render('index', { text: 'testing' });
 });
 
-//USER ROUTER
+//AUTH ROUTER
 
 app.use(
   '/auth',
+  (req, res, next) => {
+    req.db = db;
+    next();
+  },
+  authRouter
+);
+
+//USER ROUTER
+
+app.use(
+  '/user',
   (req, res, next) => {
     req.db = db;
     next();
@@ -86,10 +99,20 @@ app.use(
   tourGuideRouter
 );
 
-function logger(req, res, next) {
-  console.log(req.originalUrl);
-  next();
-}
+app.use(
+  '/rent-transportation',
+  authenticateToken,
+  (req, res, next) => {
+    req.db = db;
+    next();
+  },
+  rentTransportationRouter
+);
+
+// function logger(req, res, next) {
+//   console.log(req.originalUrl);
+//   next();
+// }
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];

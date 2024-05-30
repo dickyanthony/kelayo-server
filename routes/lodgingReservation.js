@@ -1,7 +1,7 @@
 import e from 'express';
 const router = e.Router();
 
-router.get('/get', (req, res) => {
+router.post('/', (req, res) => {
   const db = req.db;
   const { page = 1, limit = 9 } = req.body;
   const offset = (page - 1) * limit;
@@ -35,7 +35,7 @@ router.get('/get', (req, res) => {
   });
 });
 
-router.get('/get/:id', (req, res) => {
+router.get('/:id', (req, res) => {
   const db = req.db;
   const { id } = req.params;
 
@@ -50,7 +50,7 @@ router.get('/get/:id', (req, res) => {
   });
 });
 
-router.delete('/delete/:id', (req, res) => {
+router.delete('/:id', (req, res) => {
   const db = req.db;
   const { id } = req.params;
 
