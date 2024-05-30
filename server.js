@@ -3,11 +3,16 @@ import e from 'express';
 import bodyParser from 'body-parser';
 import mysql from 'mysql';
 import cors from 'cors';
-
-import userRouter from './routes/users.js';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import userRouter from './routes/auth.js';
 import touristDestinationRouter from './routes/touristDestination.js';
 import lodgingReservationRouter from './routes/lodgingReservation.js';
 import tourGuideRouter from './routes/tourGuide.js';
+
+// GENERATE RANDOM VALUE
+// const random64 = crypto.randomBytes(64).toString('hex');
+// console.log('rand', random64);
 
 const db = mysql.createConnection({
   host: process.env.SERVER_HOST,
@@ -39,7 +44,7 @@ app.get('/', (req, res) => {
 //USER ROUTER
 
 app.use(
-  '/users',
+  '/auth',
   (req, res, next) => {
     req.db = db;
     next();
@@ -51,6 +56,7 @@ app.use(
 
 app.use(
   '/lodging-reservation',
+  authenticateToken,
   (req, res, next) => {
     req.db = db;
     next();
@@ -62,6 +68,7 @@ app.use(
 
 app.use(
   '/tourist-destination',
+  authenticateToken,
   (req, res, next) => {
     req.db = db;
     next();
@@ -71,6 +78,7 @@ app.use(
 
 app.use(
   '/tour-guide',
+  authenticateToken,
   (req, res, next) => {
     req.db = db;
     next();
@@ -81,6 +89,21 @@ app.use(
 function logger(req, res, next) {
   console.log(req.originalUrl);
   next();
+}
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+
+    req.user = user;
+
+    next();
+  });
 }
 
 app.listen(3000);

@@ -3,19 +3,41 @@ const router = e.Router();
 
 router.post('/get', (req, res) => {
   const db = req.db;
-  const { type, page = 1, limit = 9 } = req.body;
+  const { type, name, minPrice, maxPrice, page = 1, limit = 9 } = req.body;
   const offset = (page - 1) * limit;
 
-  let query = 'SELECT id, title, location, description, price, image1 FROM touristDestination';
-  let countQuery = 'SELECT COUNT(*) AS totalData FROM touristDestination';
+  let query =
+    'SELECT id, title, location, description, price, image1 FROM touristDestination WHERE 1=1';
+  let countQuery = 'SELECT COUNT(*) AS totalData FROM touristDestination WHERE 1=1';
   const params = [];
   const countParams = [];
 
   if (type) {
-    query += ' WHERE type = ?';
-    countQuery += ' WHERE type = ?';
+    query += ' AND type = ?';
+    countQuery += ' AND type = ?';
     params.push(type);
     countParams.push(type);
+  }
+
+  if (name) {
+    query += ' AND title LIKE ?';
+    countQuery += ' AND title LIKE ?';
+    params.push(`%${name}%`);
+    countParams.push(`%${name}%`);
+  }
+
+  if (minPrice) {
+    query += ' AND price >= ?';
+    countQuery += ' AND price >= ?';
+    params.push(parseInt(minPrice));
+    countParams.push(parseInt(minPrice));
+  }
+
+  if (maxPrice) {
+    query += ' AND price <= ?';
+    countQuery += ' AND price <= ?';
+    params.push(parseInt(maxPrice));
+    countParams.push(parseInt(maxPrice));
   }
 
   query += ' LIMIT ? OFFSET ?';
@@ -23,7 +45,7 @@ router.post('/get', (req, res) => {
 
   db.query(countQuery, countParams, (err, countResults) => {
     if (err) {
-      return res.status(500).json('Oops, Terjadi permasalahan!');
+      return res.status(500).json({ error: err.message });
     }
 
     const totalData = countResults[0].totalData;

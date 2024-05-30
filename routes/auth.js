@@ -1,15 +1,8 @@
 import e from 'express';
 import bcrypt from 'bcryptjs';
+import { generateAccessToken } from '../utils/token.js';
 const router = e.Router();
 const saltRounds = 10;
-
-router.get('/', (req, res) => {
-  res.render('index', { text: 'testing' });
-});
-
-router.get('/new', (req, res) => {
-  res.send('User New Form');
-});
 
 // REGISTER
 router.post('/register', (req, res) => {
@@ -41,8 +34,10 @@ router.post('/register', (req, res) => {
           return res.status(500).send('Oops, Terjadi permasalahan!');
         }
         const userId = result.insertId;
+        const token = generateAccessToken({ username: username });
 
         res.status(201).json({
+          token: token,
           id: userId,
           name: nama,
           username: username,
@@ -82,8 +77,10 @@ router.post('/login', (req, res) => {
       if (!isMatch) {
         return res.status(401).send('Email atau password tidak sesuai');
       }
+      const token = generateAccessToken({ username: user.username });
 
       res.status(200).json({
+        token: token,
         id: user.id,
         email: user.email,
         name: user.name,
