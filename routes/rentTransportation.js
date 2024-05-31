@@ -20,8 +20,7 @@ router.post('/', (req, res) => {
 
   query += ' LIMIT ? OFFSET ?';
   params.push(parseInt(limit), parseInt(offset));
-  console.log('query==>', countQuery);
-  console.log('params==>', countParams);
+
   db.query(countQuery, countParams, (err, countResults) => {
     if (err) {
       return res.status(500).json({ error: err.message });
@@ -50,29 +49,45 @@ router.post('/:id', (req, res) => {
   const { page = 1, limit = 9 } = req.body;
   const offset = (page - 1) * limit;
 
-  let query = 'SELECT id, image, name, price FROM transportation WHERE id = ?';
-  let countQuery = 'SELECT COUNT(*) AS totalData FROM transportation';
-  const params = [];
-  const countParams = [id];
+  let query = `
+    SELECT SQL_CALC_FOUND_ROWS 
+      transportation.id, 
+      transportation.image, 
+      transportation.name, 
+      transportation.price,
+      rentTransportation.name as storeName,
+      rentTransportation.image as storeImage,
+      rentTransportation.id AS rentTransportationId
+    FROM transportation
+    JOIN rentTransportation ON transportation.rent_id = rentTransportation.id
+    WHERE transportation.id = ?
+    LIMIT ? OFFSET ?
+  `;
 
-  query += ' LIMIT ? OFFSET ?';
-  params.push(parseInt(limit), parseInt(offset));
+  const params = [parseInt(id), parseInt(limit), parseInt(offset)];
 
-  db.query(countQuery, countParams, (err, countResults) => {
+  db.query(query, params, (err, results) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
 
-    const totalData = countResults[0].totalData;
-    const totalPage = Math.ceil(totalData / limit);
-
-    db.query(query, params, (err, results) => {
+    db.query('SELECT FOUND_ROWS() AS totalData', (err, countResults) => {
       if (err) {
-        return res.status(500).json('Oops, Terjadi permasalahan!');
+        return res.status(500).json({ error: err.message });
       }
 
+      const totalData = countResults[0].totalData;
+      const totalPage = Math.ceil(totalData / limit);
+
+      const storeImage = results.length > 0 ? results[0].storeImage : null;
+      const storeName = results.length > 0 ? results[0].storeName : null;
+
+      const listData = results.map(({ storeImage, storeName, ...item }) => item);
+
       res.json({
-        listData: results,
+        storeImage,
+        storeName,
+        listData,
         totalData,
         totalPage,
       });
@@ -80,11 +95,11 @@ router.post('/:id', (req, res) => {
   });
 });
 
-router.get('/:id', (req, res) => {
+router.get('/transportation/:id', (req, res) => {
   const db = req.db;
   const { id } = req.params;
 
-  const query = 'SELECT * FROM tourGuide WHERE id = ?';
+  const query = 'SELECT * FROM transportation WHERE id = ?';
 
   db.query(query, [id], (err, results) => {
     if (err) {
