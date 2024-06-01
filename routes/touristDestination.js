@@ -100,4 +100,64 @@ router.delete('/:id', (req, res) => {
   });
 });
 
+router.post('/get-all', (req, res) => {
+  const db = req.db;
+  const { id } = req.params;
+
+  const query = `
+    SELECT 
+    touristDestination.id,
+      touristDestination.title, 
+      touristDestination.type, 
+      touristDestination.location, 
+      touristDestination.price, 
+      account.email AS email, 
+      account.name,
+      account.avatar
+    FROM 
+      touristDestination
+    JOIN 
+      account ON touristDestination.user_id = account.id
+`;
+
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+
+    res.json(results);
+  });
+});
+
+router.post('/user/:id', (req, res) => {
+  const db = req.db;
+  const { id } = req.params;
+
+  const query = `
+  SELECT 
+  touristDestination.id,
+    touristDestination.title, 
+    touristDestination.type, 
+    touristDestination.location, 
+    touristDestination.price, 
+    account.email AS email, 
+    account.name,
+    account.avatar
+  FROM 
+    touristDestination
+  JOIN 
+    account ON touristDestination.user_id = account.id
+    WHERE 
+      touristDestination.user_id = ?`;
+
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+
+    res.json(results);
+  });
+});
+
 export default router;

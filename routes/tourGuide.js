@@ -36,6 +36,64 @@ router.post('/', (req, res) => {
   });
 });
 
+router.post('/get-all', (req, res) => {
+  const db = req.db;
+  const { id } = req.params;
+
+  const query = `
+    SELECT 
+      tourGuide.id,
+      tourGuide.name as title, 
+      tourGuide.age, 
+      tourGuide.domisili, 
+      account.email AS email, 
+      account.name,
+      account.avatar
+    FROM 
+      tourGuide
+    JOIN 
+      account ON tourGuide.user_id = account.id
+`;
+
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+
+    res.json(results);
+  });
+});
+
+router.post('/user/:id', (req, res) => {
+  const db = req.db;
+  const { id } = req.params;
+
+  const query = `
+  SELECT 
+    tourGuide.id,
+    tourGuide.name as title, 
+    tourGuide.age, 
+    tourGuide.domisili, 
+    account.email AS email, 
+    account.name,
+    account.avatar
+  FROM 
+    tourGuide
+  JOIN 
+    account ON tourGuide.user_id = account.id
+    WHERE 
+      tourGuide.user_id = ?`;
+
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+
+    res.json(results);
+  });
+});
+
 router.get('/:id', (req, res) => {
   const db = req.db;
   const { id } = req.params;

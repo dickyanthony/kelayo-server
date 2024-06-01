@@ -35,6 +35,68 @@ router.post('/', (req, res) => {
   });
 });
 
+router.post('/get-all', (req, res) => {
+  const db = req.db;
+  const { id } = req.params;
+
+  const query = `
+    SELECT 
+      lodgingReservation.id,
+      lodgingReservation.title, 
+      lodgingReservation.price, 
+      lodgingReservation.isFreeWifi, 
+      lodgingReservation.isFreeWaterElectric, 
+      lodgingReservation.isPrivateBathroom, 
+      account.email AS email, 
+      account.name,
+      account.avatar
+    FROM 
+      lodgingReservation
+    JOIN 
+      account ON lodgingReservation.user_id = account.id
+`;
+
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+
+    res.json(results);
+  });
+});
+
+router.post('/user/:id', (req, res) => {
+  const db = req.db;
+  const { id } = req.params;
+
+  const query = `
+  SELECT 
+    lodgingReservation.id,
+    lodgingReservation.title, 
+    lodgingReservation.price, 
+    lodgingReservation.isFreeWifi, 
+    lodgingReservation.isFreeWaterElectric, 
+    lodgingReservation.isPrivateBathroom, 
+    account.email AS email, 
+    account.name,
+    account.avatar
+  FROM 
+    lodgingReservation
+  JOIN 
+    account ON lodgingReservation.user_id = account.id
+    WHERE 
+      lodgingReservation.user_id = ?`;
+
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+
+    res.json(results);
+  });
+});
+
 router.get('/:id', (req, res) => {
   const db = req.db;
   const { id } = req.params;

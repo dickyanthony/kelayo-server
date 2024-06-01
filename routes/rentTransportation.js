@@ -43,6 +43,60 @@ router.post('/', (req, res) => {
   });
 });
 
+router.post('/get-all', (req, res) => {
+  const db = req.db;
+  const { id } = req.params;
+
+  const query = `
+    SELECT 
+      rentTransportation.id,
+      rentTransportation.name as title, 
+      rentTransportation.type,
+      account.name,
+      account.avatar
+    FROM 
+      rentTransportation
+    JOIN 
+      account ON rentTransportation.user_id = account.id
+`;
+
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      console.log(err);
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+
+    res.json(results);
+  });
+});
+
+router.post('/user/:id', (req, res) => {
+  const db = req.db;
+  const { id } = req.params;
+
+  const query = `
+  SELECT 
+    rentTransportation.id,
+    rentTransportation.name as title, 
+    rentTransportation.type,
+    account.name,
+    account.avatar
+  FROM 
+    rentTransportation
+  JOIN 
+    account ON rentTransportation.user_id = account.id
+    WHERE 
+      rentTransportation.user_id = ?`;
+
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+
+    res.json(results);
+  });
+});
+
 router.post('/:id', (req, res) => {
   const db = req.db;
   const { id } = req.params;
