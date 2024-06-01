@@ -1,7 +1,9 @@
 import e from 'express';
 import multer from 'multer';
+import bcrypt from 'bcryptjs';
 
 const router = e.Router();
+const saltRounds = 10;
 
 const upload = multer({
   limits: { fileSize: 500 * 1024 },
@@ -84,6 +86,56 @@ router.put('/:id', upload.single('image'), (req, res) => {
       return res.status(404).send('Pengguna tidak ditemukan');
     }
     res.status(200).send('Profil berhasil diupdate');
+  });
+});
+
+router.put('/update-password/:id', (req, res) => {
+  const { id } = req.params;
+  const { password, newPassword } = req.body;
+  const db = req.db;
+
+  if (!id || !password || !newPassword) {
+    return res.status(400).send('Isi Semua Bidang!');
+  }
+
+  db.query('SELECT * FROM account WHERE id = ?', [id], (err, results) => {
+    if (err) {
+      return res.status(500).send(err.message);
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send('Pengguna tidak ditemukan');
+    }
+
+    const user = results[0];
+
+    bcrypt.compare(password, user.password, (err, isMatch) => {
+      if (err) {
+        return res.status(500).send(err.message);
+      }
+
+      if (!isMatch) {
+        return res.status(400).send('Kata sandi salah');
+      }
+
+      bcrypt.hash(newPassword, saltRounds, (err, hashedPassword) => {
+        if (err) {
+          return res.status(500).send(err.message);
+        }
+
+        db.query(
+          'UPDATE account SET password = ? WHERE id = ?',
+          [hashedPassword, id],
+          (err, result) => {
+            if (err) {
+              return res.status(500).send(err.message);
+            }
+
+            res.status(200).send('Kata sandi berhasil diubah');
+          }
+        );
+      });
+    });
   });
 });
 
