@@ -35,8 +35,8 @@ const app = e();
 
 // app.use(logger);
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
