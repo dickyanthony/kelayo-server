@@ -1,5 +1,10 @@
 import e from 'express';
+import multer from 'multer';
 const router = e.Router();
+
+const upload = multer({
+  limits: { fileSize: 500 * 1024 },
+});
 
 router.post('/', (req, res) => {
   const db = req.db;
@@ -106,6 +111,69 @@ router.get('/:id', (req, res) => {
     }
 
     res.json(results[0]);
+  });
+});
+
+router.put('/:id', upload.single('image'), (req, res) => {
+  const { id, name, age, status, domisili, competition, description, userId } = req.body;
+  const db = req.db;
+
+  if (!name || !age || !status || !domisili || !competition || !description) {
+    return res.status(400).send('Isi Semua Bidang!');
+  }
+
+  let query;
+  let values;
+
+  if (id === 'undefined') {
+    query = `
+      INSERT INTO tourGuide
+      (name, age, status, domisili, competition, description, user_id${
+        req.file || req.body.image ? ', image' : ''
+      })
+      VALUES (?, ?, ?, ?, ?, ?, ?${req.file || req.body.image ? ', ?' : ''})
+    `;
+
+    values = [name, age, status, domisili, competition, description, userId];
+
+    if (req.file) {
+      values.push(req.file.buffer);
+    } else if (req.body.image) {
+      const base64Data = req.body.image.replace(/^data:image\/\w+;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      values.push(imageBuffer);
+    }
+  } else {
+    query = `
+      UPDATE tourGuide
+      SET name = ?, age = ?, status = ?, domisili = ?, competition = ?, description = ?
+      ${req.file || req.body.image ? ', image = ?' : ''}
+      WHERE id = ?
+    `;
+
+    values = [name, age, status, domisili, competition, description];
+
+    if (req.file) {
+      values.push(req.file.buffer);
+    } else if (req.body.image) {
+      const base64Data = req.body.image.replace(/^data:image\/\w+;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      values.push(imageBuffer);
+    }
+
+    values.push(id);
+  }
+
+  db.query(query, values, (err, result) => {
+    if (err) {
+      return res.status(500).send(err.message);
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).send('Pemandu wisata tidak ditemukan');
+    }
+    const message =
+      id === 'undefined' ? 'Pemandu wisata berhasil dibuat' : 'Pemandu wisata berhasil diupdate';
+    res.status(200).send(message);
   });
 });
 
