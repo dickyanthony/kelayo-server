@@ -1,5 +1,10 @@
 import e from 'express';
+import multer from 'multer';
 const router = e.Router();
+
+const upload = multer({
+  limits: { fileSize: 500 * 1024 },
+});
 
 router.post('/', (req, res) => {
   const db = req.db;
@@ -160,4 +165,65 @@ router.post('/user/:id', (req, res) => {
   });
 });
 
+router.put(
+  '/:id',
+  upload.fields([{ name: 'image1' }, { name: 'image2' }, { name: 'image3' }]),
+  (req, res) => {
+    const db = req.db;
+    const { id, title, price, location, description, type, userId } = req.body;
+
+    if (!title || !price || !location || !description || !type) {
+      return res.status(400).send('All fields must be filled!');
+    }
+
+    let query =
+      'UPDATE touristDestination SET title = ?, price = ?, location = ?, description = ?, type = ?';
+    let values = [title, price, location, description, type];
+
+    if (id === 'undefined') {
+      query = `INSERT INTO touristDestination (title, price, location, description, type, user_id${
+        req.body.image1 ? ', image1' : ''
+      }${req.body.image2 ? ', image2' : ''}${
+        req.body.image3 ? ', image3' : ''
+      }) VALUES (?, ?, ?, ?, ?, ?${req.body.image1 ? ', ?' : ''}${req.body.image2 ? ', ?' : ''}${
+        req.body.image3 ? ', ?' : ''
+      })`;
+      values.push(userId);
+    }
+    if (req.body.image1) {
+      const base64Data = req.body.image1.replace(/^data:image\/\w+;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      if (id !== 'undefined') query += ',image1=?';
+      values.push(imageBuffer);
+    }
+    if (req.body.image2) {
+      const base64Data = req.body.image2.replace(/^data:image\/\w+;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      if (id !== 'undefined') query += ',image2=?';
+      values.push(imageBuffer);
+    }
+    if (req.body.image3) {
+      const base64Data = req.body.image3.replace(/^data:image\/\w+;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      if (id !== 'undefined') query += ',image3=?';
+      values.push(imageBuffer);
+    }
+
+    if (id !== 'undefined') {
+      query += ' WHERE id = ?';
+      values.push(id);
+    }
+    console.log('query==>', query);
+    console.log('values==>', values);
+    db.query(query, values, (err, result) => {
+      if (err) {
+        return res.status(500).send(err.message);
+      }
+      const message = id
+        ? 'Destinasi wisata berhasil diupdate'
+        : 'Destinasi wisata berhasil dibuat';
+      res.status(200).send(message);
+    });
+  }
+);
 export default router;
