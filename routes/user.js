@@ -13,7 +13,7 @@ router.get('/:id', (req, res) => {
   const db = req.db;
   const { id } = req.params;
 
-  const query = 'SELECT id, name, username, email, avatar FROM account WHERE id = ?';
+  const query = 'SELECT id, name, username, email, role, gender, avatar FROM account WHERE id = ?';
 
   db.query(query, [id], (err, results) => {
     if (err) {
@@ -58,7 +58,7 @@ router.put('/:id', upload.single('image'), (req, res) => {
   const db = req.db;
 
   if (!id || !nama) {
-    return res.status(400).send('Missing required fields');
+    return res.status(400).send('Isi Semua Bidang!');
   }
 
   let query = 'UPDATE account SET name = ?';

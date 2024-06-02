@@ -1,9 +1,8 @@
 import 'dotenv/config';
-import e from 'express';
+import express from 'express';
 import bodyParser from 'body-parser';
 import mysql from 'mysql';
 import cors from 'cors';
-import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import authRouter from './routes/auth.js';
 import userRouter from './routes/user.js';
@@ -11,10 +10,6 @@ import touristDestinationRouter from './routes/touristDestination.js';
 import lodgingReservationRouter from './routes/lodgingReservation.js';
 import tourGuideRouter from './routes/tourGuide.js';
 import rentTransportationRouter from './routes/rentTransportation.js';
-
-// GENERATE RANDOM VALUE
-// const random64 = crypto.randomBytes(64).toString('hex');
-// console.log('rand', random64);
 
 const db = mysql.createConnection({
   host: process.env.SERVER_HOST,
@@ -27,13 +22,11 @@ db.connect((err) => {
   if (err) {
     throw err;
   }
-
   console.log('MySQL connected...');
 });
 
-const app = e();
+const app = express();
 
-// app.use(logger);
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
@@ -43,76 +36,10 @@ app.get('/', (req, res) => {
   res.render('index', { text: 'testing' });
 });
 
-//AUTH ROUTER
-
-app.use(
-  '/auth',
-  (req, res, next) => {
-    req.db = db;
-    next();
-  },
-  authRouter
-);
-
-//USER ROUTER
-
-app.use(
-  '/user',
-  (req, res, next) => {
-    req.db = db;
-    next();
-  },
-  userRouter
-);
-
-//LODGING RESERVATION ROUTER
-
-app.use(
-  '/lodging-reservation',
-  authenticateToken,
-  (req, res, next) => {
-    req.db = db;
-    next();
-  },
-  lodgingReservationRouter
-);
-
-//TOURIST DESTINATION ROUTER
-
-app.use(
-  '/tourist-destination',
-  authenticateToken,
-  (req, res, next) => {
-    req.db = db;
-    next();
-  },
-  touristDestinationRouter
-);
-
-app.use(
-  '/tour-guide',
-  authenticateToken,
-  (req, res, next) => {
-    req.db = db;
-    next();
-  },
-  tourGuideRouter
-);
-
-app.use(
-  '/rent-transportation',
-  authenticateToken,
-  (req, res, next) => {
-    req.db = db;
-    next();
-  },
-  rentTransportationRouter
-);
-
-// function logger(req, res, next) {
-//   console.log(req.originalUrl);
-//   next();
-// }
+app.use((req, res, next) => {
+  req.db = db;
+  next();
+});
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -122,11 +49,18 @@ function authenticateToken(req, res, next) {
 
   jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
     if (err) return res.status(403).json('Unauthorized');
-
     req.user = user;
-
     next();
   });
 }
 
-app.listen(3000);
+app.use('/auth', authRouter);
+app.use('/user', authenticateToken, userRouter);
+app.use('/lodging-reservation', authenticateToken, lodgingReservationRouter);
+app.use('/tourist-destination', authenticateToken, touristDestinationRouter);
+app.use('/tour-guide', authenticateToken, tourGuideRouter);
+app.use('/rent-transportation', authenticateToken, rentTransportationRouter);
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
