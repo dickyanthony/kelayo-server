@@ -9,7 +9,9 @@ import userRouter from './routes/user.js';
 import touristDestinationRouter from './routes/touristDestination.js';
 import lodgingReservationRouter from './routes/lodgingReservation.js';
 import tourGuideRouter from './routes/tourGuide.js';
+import transportationRouter from './routes/transportation.js';
 import rentTransportationRouter from './routes/rentTransportation.js';
+import orderLodgingReservationRouter from './routes/orderLodgingReservation.js';
 
 const db = mysql.createConnection({
   host: process.env.SERVER_HOST,
@@ -59,7 +61,9 @@ app.use('/user', authenticateToken, userRouter);
 app.use('/lodging-reservation', authenticateToken, lodgingReservationRouter);
 app.use('/tourist-destination', authenticateToken, touristDestinationRouter);
 app.use('/tour-guide', authenticateToken, tourGuideRouter);
+app.use('/transportation', authenticateToken, transportationRouter);
 app.use('/rent-transportation', authenticateToken, rentTransportationRouter);
+app.use('/order-lodging-reservation', authenticateToken, orderLodgingReservationRouter);
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000');

@@ -170,24 +170,24 @@ router.put(
   upload.fields([{ name: 'image1' }, { name: 'image2' }, { name: 'image3' }]),
   (req, res) => {
     const db = req.db;
-    const { id, title, price, location, description, type, userId } = req.body;
+    const { id, title, price, location, description, type, lat, lng, userId } = req.body;
 
     if (!title || !price || !location || !description || !type) {
-      return res.status(400).send('All fields must be filled!');
+      return res.status(400).send('Isi semua bidang!');
     }
 
     let query =
-      'UPDATE touristDestination SET title = ?, price = ?, location = ?, description = ?, type = ?';
-    let values = [title, price, location, description, type];
+      'UPDATE touristDestination SET title = ?, price = ?, location = ?, description = ?, type = ?, lat = ?, lng = ?';
+    let values = [title, price, location, description, type, lat, lng];
 
     if (id === 'undefined') {
-      query = `INSERT INTO touristDestination (title, price, location, description, type, user_id${
+      query = `INSERT INTO touristDestination (title, price, location, description, type, lat, lng, user_id${
         req.body.image1 ? ', image1' : ''
       }${req.body.image2 ? ', image2' : ''}${
         req.body.image3 ? ', image3' : ''
-      }) VALUES (?, ?, ?, ?, ?, ?${req.body.image1 ? ', ?' : ''}${req.body.image2 ? ', ?' : ''}${
-        req.body.image3 ? ', ?' : ''
-      })`;
+      }) VALUES (?, ?, ?, ?, ?, ?, ?, ?${req.body.image1 ? ', ?' : ''}${
+        req.body.image2 ? ', ?' : ''
+      }${req.body.image3 ? ', ?' : ''})`;
       values.push(userId);
     }
     if (req.body.image1) {
@@ -213,8 +213,7 @@ router.put(
       query += ' WHERE id = ?';
       values.push(id);
     }
-    console.log('query==>', query);
-    console.log('values==>', values);
+
     db.query(query, values, (err, result) => {
       if (err) {
         return res.status(500).send(err.message);
