@@ -51,6 +51,8 @@ router.post('/get-all', (req, res) => {
       tourGuide.name as title, 
       tourGuide.age, 
       tourGuide.domisili, 
+      tourguide.price,
+      tourguide.phone,
       account.email AS email, 
       account.name,
       account.avatar
@@ -80,6 +82,8 @@ router.post('/user/:id', (req, res) => {
     tourGuide.name as title, 
     tourGuide.age, 
     tourGuide.domisili, 
+    tourguide.price,
+    tourguide.phone,
     account.email AS email, 
     account.name,
     account.avatar
@@ -115,10 +119,11 @@ router.get('/:id', (req, res) => {
 });
 
 router.put('/:id', upload.single('image'), (req, res) => {
-  const { id, name, age, status, domisili, competition, description, userId } = req.body;
+  const { id, name, age, status, domisili, competition, description, price, phone, userId } =
+    req.body;
   const db = req.db;
 
-  if (!name || !age || !status || !domisili || !competition || !description) {
+  if (!name || !age || !status || !domisili || !competition || !description || !price || !phone) {
     return res.status(400).send('Isi Semua Bidang!');
   }
 
@@ -128,13 +133,13 @@ router.put('/:id', upload.single('image'), (req, res) => {
   if (id === 'undefined') {
     query = `
       INSERT INTO tourGuide
-      (name, age, status, domisili, competition, description, user_id${
+      (name, age, status, domisili, competition, description, price, phone, user_id${
         req.file || req.body.image ? ', image' : ''
       })
-      VALUES (?, ?, ?, ?, ?, ?, ?${req.file || req.body.image ? ', ?' : ''})
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?${req.file || req.body.image ? ', ?' : ''})
     `;
 
-    values = [name, age, status, domisili, competition, description, userId];
+    values = [name, age, status, domisili, competition, description, price, phone, userId];
 
     if (req.file) {
       values.push(req.file.buffer);
@@ -146,12 +151,12 @@ router.put('/:id', upload.single('image'), (req, res) => {
   } else {
     query = `
       UPDATE tourGuide
-      SET name = ?, age = ?, status = ?, domisili = ?, competition = ?, description = ?
+      SET name = ?, age = ?, status = ?, domisili = ?, competition = ?, description = ?, price = ?, phone = ?
       ${req.file || req.body.image ? ', image = ?' : ''}
       WHERE id = ?
     `;
 
-    values = [name, age, status, domisili, competition, description];
+    values = [name, age, status, domisili, competition, description, price, phone];
 
     if (req.file) {
       values.push(req.file.buffer);
