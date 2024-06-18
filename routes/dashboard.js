@@ -80,35 +80,45 @@ router.post('/', (req, res) => {
     });
 });
 
-router.get('/spark', async (req, res) => {
+router.post('/spark', async (req, res) => {
   const db = req.db;
   const { userId } = req.body;
+
   let orderLodgingReservationQuery = `
-  SELECT status, trans as date, COUNT(*) as count 
-  FROM orderLodgingReservation
-  GROUP BY status, trans;
-  `;
-  let orderTransportationQuery = `
-  SELECT status, trans as date, COUNT(*) as count 
-  FROM orderTransportation
-  GROUP BY status, trans;
+    SELECT olr.status, olr.trans as date, COUNT(*) as count 
+    FROM orderLodgingReservation olr
   `;
   let orderTourGuideQuery = `
-  SELECT status, trans as date, COUNT(*) as count 
-  FROM orderTourGuide
-  GROUP BY status, trans;
+    SELECT otg.status, otg.trans as date, COUNT(*) as count 
+    FROM orderTourGuide otg
+  `;
+  let orderTransportationQuery = `
+    SELECT ot.status, ot.trans as date, COUNT(*) as count 
+    FROM orderTransportation ot
   `;
   const params = [];
+
   if (userId) {
-    //   orderLodgingReservationQuery += ` WHERE lr.user_id = ? GROUP BY olr.status`;
-    //   orderTransportationQuery += ` WHERE rt.user_id = ? GROUP BY ot.status`;
-    //   orderTourGuideQuery += ` WHERE tg.user_id = ? GROUP BY otg.status`;
-    //   params.push(userId);
-    // } else {
-    //   orderLodgingReservationQuery += ` GROUP BY olr.status`;
-    //   orderTransportationQuery += ` GROUP BY ot.status`;
-    //   orderTourGuideQuery += ` GROUP BY otg.status`;
+    orderLodgingReservationQuery += `
+      JOIN lodgingReservation lr ON olr.lodging_reservation_id = lr.id
+      WHERE lr.user_id = ?
+    `;
+    orderTourGuideQuery += `
+      JOIN tourGuide tg ON otg.tour_guide_id = tg.id
+      WHERE tg.user_id = ?
+    `;
+    orderTransportationQuery += `
+      JOIN transportation t ON ot.transportation_id = t.id
+      JOIN rentTransportation rt ON t.rent_id = rt.id
+      WHERE rt.user_id = ?
+    `;
+    params.push(userId);
   }
+
+  orderLodgingReservationQuery += ` GROUP BY olr.status, olr.trans;`;
+  orderTourGuideQuery += ` GROUP BY otg.status, otg.trans;`;
+  orderTransportationQuery += ` GROUP BY ot.status, ot.trans;`;
+
   Promise.all([
     new Promise((resolve, reject) => {
       db.query(orderLodgingReservationQuery, params, (err, results) => {
@@ -130,12 +140,9 @@ router.get('/spark', async (req, res) => {
     }),
   ])
     .then(([lodgingResults, transportationResults, tourGuideResults]) => {
-      console.log('res==>', lodgingResults);
-      console.log('res==>', transportationResults);
       const formatResults = (results) => {
         const dateCounts = {};
 
-        // Initialize dateCounts with 0 counts for each status for all available dates
         [1, 2, 3].forEach((status) => {
           dateCounts[status] = {};
           results.forEach((result) => {
@@ -144,19 +151,17 @@ router.get('/spark', async (req, res) => {
           });
         });
 
-        // Sum the counts for each date and status
         results.forEach((result) => {
           const date = new Date(result.date).toISOString().slice(0, 10);
           const status = result.status;
           dateCounts[status][date] += result.count;
         });
 
-        // Format the result as an array of objects, excluding dates with 0 counts
         const formattedResults = {};
         [1, 2, 3].forEach((status) => {
           formattedResults[status] = Object.entries(dateCounts[status])
-            .filter(([date, count]) => count > 0) // Filter out dates with 0 counts
-            .map(([date, count]) => ({ label: date, value: count })); // Change 'date' to 'name'
+            .filter(([date, count]) => count > 0)
+            .map(([date, count]) => ({ label: date, value: count }));
         });
 
         return formattedResults;
@@ -169,6 +174,7 @@ router.get('/spark', async (req, res) => {
       });
     })
     .catch((err) => {
+      console.log('er==>', err);
       res.status(500).send('Oops, Terjadi permasalahan!');
     });
 });
