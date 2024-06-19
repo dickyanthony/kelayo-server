@@ -174,7 +174,6 @@ router.post('/spark', async (req, res) => {
       });
     })
     .catch((err) => {
-      console.log('er==>', err);
       res.status(500).send('Oops, Terjadi permasalahan!');
     });
 });
