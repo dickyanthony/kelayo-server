@@ -12,7 +12,7 @@ router.post('/', (req, res) => {
   const offset = (page - 1) * limit;
 
   let query =
-    'SELECT id, title, location, description, price, image1 FROM touristDestination WHERE 1=1';
+    'SELECT id, title, location, description, price, image1, lat, lng FROM touristDestination WHERE 1=1';
   let countQuery = 'SELECT COUNT(*) AS totalData FROM touristDestination WHERE 1=1';
   const params = [];
   const countParams = [];
