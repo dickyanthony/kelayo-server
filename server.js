@@ -71,7 +71,8 @@ app.use('/order-lodging-reservation', authenticateToken, orderLodgingReservation
 app.use('/order-tour-guide', authenticateToken, orderTourGuideRouter);
 app.use('/order-transportation', authenticateToken, orderTransportationRouter);
 app.use('/dashboard', authenticateToken, dashboardRouter);
-app.use('/midtrans', authenticateToken, midtransRouter);
+// app.use('/midtrans', authenticateToken, midtransRouter);
+app.use('/midtrans', midtransRouter);
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000');

@@ -124,6 +124,49 @@ router.get('/:userId', (req, res) => {
 //   });
 // });
 
+router.post('/create-transaction', (req, res) => {
+  const {
+    id,
+    transportation_id,
+    first_name,
+    last_name,
+    hp,
+    trans,
+    start,
+    end,
+    total_price,
+    image,
+    user_id,
+    status,
+  } = req.body;
+  const db = req.db;
+
+  const sql =
+    'INSERT INTO orderTransportation (id, transportation_id, first_name, last_name, hp, trans, start, end, total_price, image, user_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+
+  const values = [
+    id,
+    transportation_id,
+    first_name,
+    last_name,
+    hp,
+    trans,
+    start,
+    end,
+    total_price,
+    image,
+    user_id,
+    status,
+  ];
+
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+    res.status(200).json('Order Berhasil Ditambahkan');
+  });
+});
+
 router.put('/:id', (req, res) => {
   const db = req.db;
   const id = req.params.id;

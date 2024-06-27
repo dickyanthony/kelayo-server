@@ -122,6 +122,50 @@ router.get('/:userId', (req, res) => {
 //   });
 // });
 
+router.post('/create-transaction', (req, res) => {
+  const {
+    id,
+    lodging_reservation_id,
+    first_name,
+    last_name,
+    hp,
+    trans,
+    start,
+    end,
+    total_price,
+    image,
+    user_id,
+    status,
+  } = req.body;
+  const db = req.db;
+
+  const sql =
+    'INSERT INTO orderLodgingReservation (id, lodging_reservation_id, first_name, last_name, hp, trans, start, end, total_price, image, user_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+
+  const values = [
+    id,
+    lodging_reservation_id,
+    first_name,
+    last_name,
+    hp,
+    trans,
+    start,
+    end,
+    total_price,
+    image,
+    user_id,
+    status,
+  ];
+
+  db.query(sql, values, (err, result) => {
+    console.log('er==>', err);
+    if (err) {
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+    res.status(200).json('Order Berhasil Ditambahkan');
+  });
+});
+
 router.put('/:id', (req, res) => {
   const db = req.db;
   const id = req.params.id;

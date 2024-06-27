@@ -71,7 +71,7 @@ router.post('/login', (req, res) => {
   }
 
   const sql =
-    'SELECT id, username, email, password, name, gender,role FROM account WHERE email = ?';
+    'SELECT id, username, email, password, name, gender,role, avatar FROM account WHERE email = ?';
   db.query(sql, [email], (err, results) => {
     if (err) {
       return res.status(500).send('Oops, Terjadi permasalahan!');
@@ -98,6 +98,7 @@ router.post('/login', (req, res) => {
         username: user.username,
         gender: user.gender,
         role: user.role,
+        avatar: user.avatar,
       });
     });
   });

@@ -108,6 +108,50 @@ router.get('/:userId', (req, res) => {
   });
 });
 
+router.post('/create-transaction', (req, res) => {
+  const {
+    id,
+    tour_guide_id,
+    first_name,
+    last_name,
+    hp,
+    trans,
+    start,
+    end,
+    total_price,
+    image,
+    user_id,
+    status,
+  } = req.body;
+
+  const db = req.db;
+
+  const sql =
+    'INSERT INTO orderTourGuide  (id, tour_guide_id, first_name, last_name, hp, trans, start, end, total_price, image, user_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+
+  const values = [
+    id,
+    tour_guide_id,
+    first_name,
+    last_name,
+    hp,
+    trans,
+    start,
+    end,
+    total_price,
+    image,
+    user_id,
+    status,
+  ];
+
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      return res.status(500).json('Oops, Terjadi permasalahan!');
+    }
+    res.status(200).json('Order Berhasil Ditambahkan');
+  });
+});
+
 // router.get('/get-by-tour-reservation/:tourGuideId', (req, res) => {
 //   const db = req.db;
 //   const tourGuideId = req.params.tourGuideId;
